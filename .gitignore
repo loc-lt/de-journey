@@ -1,0 +1,20 @@
+.venv/
+__pycache__/
+
+# Generated crawl output
+data/output/
+
+# Course-provided input data
+data/input/products-0-200000.csv
+
+# Local environment files
+.env
+*.env
+
+# Python build/cache files
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
