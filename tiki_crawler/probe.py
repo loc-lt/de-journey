@@ -7,7 +7,8 @@ import time
 from pathlib import Path
 from typing import Any
 
-from tiki_crawler.client import create_client, fetch_product, load_product_ids
+from tiki_crawler.client import create_client, fetch_product
+from tiki_crawler.input_loader import load_and_validate_product_ids
 
 
 def percentile(values: list[float], pct: float) -> float:
@@ -45,12 +46,15 @@ def recommend_concurrency(results_summary: list[dict[str, Any]]) -> dict[str, An
 
 
 async def run_probe(args: Any) -> None:
-    ids = load_product_ids(Path(args.ids_file))
+    ids, input_report = load_and_validate_product_ids(Path(args.ids_file))
     sample_ids = ids[: args.sample_size]
     if not sample_ids:
         raise ValueError("No product ids found in ids-file")
 
-    print(f"Loaded {len(ids)} ids. Probe sample size: {len(sample_ids)}")
+    print(f"Loaded {len(ids)} unique ids from {input_report.total_rows} rows.")
+    print(f"Input duplicates removed: {input_report.duplicate_rows}")
+    print(f"Input invalid rows: {input_report.invalid_rows}")
+    print(f"Probe sample size: {len(sample_ids)}")
     print(f"Concurrency candidates: {args.candidates}")
 
     results_summary = []

@@ -1,0 +1,24 @@
+input:
+  file: data/input/products-0-200000.csv
+
+output:
+  directory: data/output
+
+crawl:
+  batch_size: 1000
+  concurrency: 20
+  timeout_s: 15.0
+  retries: 2
+
+retry:
+  enabled: true
+  concurrency: 2
+  timeout_s: 20.0
+  retries: 3
+
+reports:
+  input_validation: input_validation_report.json
+  output_validation: output_validation_report.json
+  checkpoint: checkpoint.json
+  retry_summary: retry_summary.json
+  retry_failed: still_failed.json

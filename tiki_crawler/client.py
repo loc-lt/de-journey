@@ -1,11 +1,9 @@
 from __future__ import annotations
 
 import asyncio
-import csv
 import importlib.util
 import random
 import time
-from pathlib import Path
 
 import httpx
 
@@ -23,7 +21,7 @@ DEFAULT_HEADERS = {
 
 
 def create_client() -> httpx.AsyncClient:
-    # Enable HTTP/2 when the optional h2 dependency is available.
+    """Create one shared HTTP client so connections can be reused efficiently."""
     use_http2 = importlib.util.find_spec("h2") is not None
     return httpx.AsyncClient(
         headers=DEFAULT_HEADERS,
@@ -32,13 +30,9 @@ def create_client() -> httpx.AsyncClient:
     )
 
 
-def load_product_ids(path: Path) -> list[int]:
-    with path.open("r", encoding="utf-8", newline="") as handle:
-        reader = csv.DictReader(handle)
-        if not reader.fieldnames:
-            raise ValueError("CSV ids-file must include a header row")
-
-        return [int(row["id"]) for row in reader]
+def build_backoff_delay(attempt: int) -> float:
+    """Use exponential backoff with a little jitter to avoid request bursts."""
+    return (2**attempt) + random.uniform(0, 0.3)
 
 
 async def fetch_product(
@@ -48,6 +42,12 @@ async def fetch_product(
     timeout_s: float,
     max_retries: int,
 ) -> FetchResult:
+    """
+    Fetch one product detail document.
+
+    Each request is wrapped in its own retry loop so that one failing product
+    does not interrupt the rest of the batch.
+    """
     async with semaphore:
         last_error = "unknown_error"
         for attempt in range(max_retries + 1):
@@ -67,7 +67,7 @@ async def fetch_product(
                     )
 
                 if status in {429, 500, 502, 503, 504} and attempt < max_retries:
-                    await asyncio.sleep((2**attempt) + random.uniform(0, 0.3))
+                    await asyncio.sleep(build_backoff_delay(attempt))
                     continue
 
                 return FetchResult(
@@ -81,7 +81,7 @@ async def fetch_product(
                 elapsed_s = time.perf_counter() - started
                 last_error = exc.__class__.__name__
                 if attempt < max_retries:
-                    await asyncio.sleep((2**attempt) + random.uniform(0, 0.3))
+                    await asyncio.sleep(build_backoff_delay(attempt))
                     continue
                 return FetchResult(
                     product_id=product_id,

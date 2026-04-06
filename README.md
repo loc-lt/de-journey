@@ -10,17 +10,31 @@ project02/
     input/
       products-0-200000.csv
     output/
+      input_validation_report.json
+      checkpoint.json
+      output_validation_report.json
+      retry/
   requirements.txt
   README.md
+  settings.yaml
+  MEETING_NOTES_VI.md
+  PIPELINE_GUIDE_VI.md
+  PRODUCTION_READY_CHECKLIST.md
   product_sample.json
   tiki_crawler/
     __init__.py
+    checkpoint.py
     cli.py
+    config.py
     client.py
+    input_loader.py
     normalize.py
+    reporter.py
+    retry_pipeline.py
     writer.py
     models.py
     probe.py
+    validators.py
 ```
 
 ## Setup
@@ -32,6 +46,21 @@ python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 ```
+
+The crawler reads its default runtime configuration from:
+
+```text
+settings.yaml
+```
+
+This file is used for:
+
+- input and output paths
+- crawl batch size
+- crawl concurrency
+- timeout and retry values
+- retry pipeline settings
+- report file names
 
 If `.venv` already exists, just reinstall the dependencies after pulling new changes:
 
@@ -81,6 +110,7 @@ It prints metrics such as:
 - `avg_latency_s`
 - `p95_latency_s`
 - error counts such as `http_404`, `http_429`, timeouts, or `5xx`
+- duplicate/invalid row counts from the input CSV
 
 ## Crawl Data
 
@@ -89,6 +119,8 @@ Run the crawler:
 ```bash
 python3 -m tiki_crawler.cli crawl --concurrency 20 --batch-size 1000
 ```
+
+The command-line options can override the defaults defined in `settings.yaml`.
 
 If you want to use another CSV file:
 
@@ -103,6 +135,10 @@ The crawler writes data to the `data/output/` directory:
 - `data/output/products_00001.json`, `data/output/products_00002.json`, ...
 - `data/output/_failed/failed_00001.json`, ...
 - `data/output/summary.json`
+- `data/output/input_validation_report.json`
+- `data/output/output_validation_report.json`
+- `data/output/checkpoint.json`
+- `data/output/retry/retry_summary.json`
 
 Each product output file contains normalized records with these fields:
 
@@ -112,6 +148,13 @@ Each product output file contains normalized records with these fields:
 - `price`
 - `description`
 - `images`
+
+Each failed record contains:
+
+- `product_id`
+- `status_code`
+- `error`
+- `elapsed_s`
 
 ## Description Normalization
 
@@ -139,3 +182,21 @@ After the crawl finishes, the program prints a final summary in the terminal, in
 - skipped batches
 - error breakdown
 - summary file location
+
+## Pipeline Stages
+
+The crawler follows a data-first pipeline:
+
+1. Validate and deduplicate the input CSV
+2. Crawl product details in batches
+3. Write successful and failed records to disk immediately
+4. Save a checkpoint after each completed batch
+5. Run a slower retry pipeline for failed IDs
+6. Validate the generated output
+7. Write final reports and summary files
+
+For more detail, see:
+
+- `MEETING_NOTES_VI.md`
+- `PIPELINE_GUIDE_VI.md`
+- `PRODUCTION_READY_CHECKLIST.md`
