@@ -60,6 +60,7 @@ This file is used for:
 - crawl concurrency
 - timeout and retry values
 - retry pipeline settings
+- auto-restart runner settings
 - report file names
 
 If `.venv` already exists, just reinstall the dependencies after pulling new changes:
@@ -119,6 +120,17 @@ Run the crawler:
 ```bash
 python3 -m tiki_crawler.cli crawl --concurrency 20 --batch-size 1000
 ```
+
+By default, the `crawl` command now runs with auto-restart enabled. If the
+process crashes because of an unexpected runtime or network-related error, the
+runner sleeps for a short delay, starts the crawl again, and resumes from the
+batches that already exist on disk.
+
+Useful options:
+
+- `--no-auto-restart`: stop immediately when the process crashes
+- `--restart-delay 10`: wait 10 seconds before trying again
+- `--max-restarts 5`: allow at most 5 automatic restart attempts
 
 The command-line options can override the defaults defined in `settings.yaml`.
 
@@ -199,9 +211,10 @@ The crawler follows a data-first pipeline:
 2. Crawl product details in batches
 3. Write successful and failed records to disk immediately
 4. Save a checkpoint after each completed batch
-5. Run a slower sequential retry pipeline for failed IDs
-6. Validate the generated output
-7. Write final reports and summary files
+5. Auto-restart and resume safely if the crawl process crashes
+6. Run a slower sequential retry pipeline for failed IDs
+7. Validate the generated output
+8. Write final reports and summary files
 
 For more detail, see:
 

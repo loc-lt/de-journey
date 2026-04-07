@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import time
+import traceback
 from datetime import datetime
 from pathlib import Path
 
@@ -123,6 +124,14 @@ def finalize_summary_metrics(summary: dict, total_elapsed: float) -> None:
     )
 
 
+def should_auto_restart(auto_restart: bool, restart_count: int, max_restarts: int) -> bool:
+    if not auto_restart:
+        return False
+    if max_restarts <= 0:
+        return True
+    return restart_count < max_restarts
+
+
 async def run_crawl(args: argparse.Namespace) -> None:
     # Stage 1: trust the input only after validating and deduplicating it.
     ids, input_report = load_and_validate_product_ids(Path(args.ids_file))
@@ -138,6 +147,12 @@ async def run_crawl(args: argparse.Namespace) -> None:
     total_batches = (len(ids) + args.batch_size - 1) // args.batch_size
     summary = build_summary(args, len(ids), total_batches, started_at)
     checkpoint_state = load_checkpoint(checkpoint_path)
+    if checkpoint_state.last_completed_batch and not args.overwrite:
+        print(
+            "[resume] checkpoint found | "
+            f"last_completed_batch={checkpoint_state.last_completed_batch} "
+            f"processed_ids={checkpoint_state.processed_ids}"
+        )
 
     write_json(input_report_path, input_report.to_dict())
     print_input_report(input_report)
@@ -228,6 +243,32 @@ async def run_crawl(args: argparse.Namespace) -> None:
     print_final_report(summary)
 
 
+def run_crawl_with_auto_restart(args: argparse.Namespace) -> None:
+    restart_count = 0
+
+    while True:
+        try:
+            if restart_count == 0:
+                print("[runner] starting crawl")
+            else:
+                print(f"[runner] restarting crawl | restart={restart_count}")
+            asyncio.run(run_crawl(args))
+            return
+        except KeyboardInterrupt:
+            raise
+        except Exception as exc:
+            traceback.print_exc()
+            if not should_auto_restart(args.auto_restart, restart_count, args.max_restarts):
+                raise
+
+            restart_count += 1
+            print(
+                "[runner] crawl crashed but auto-restart is enabled | "
+                f"error={exc.__class__.__name__} | sleeping={args.restart_delay}s"
+            )
+            time.sleep(args.restart_delay)
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Batch crawler for Tiki product details")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -262,6 +303,31 @@ def build_parser() -> argparse.ArgumentParser:
     crawl.add_argument("--timeout", type=float, default=SETTINGS.crawl.timeout_s, help="Request timeout in seconds")
     crawl.add_argument("--retries", type=int, default=SETTINGS.crawl.retries, help="Retry count for transient failures")
     crawl.add_argument(
+        "--auto-restart",
+        dest="auto_restart",
+        action="store_true",
+        default=SETTINGS.runner.auto_restart,
+        help="Automatically restart crawl after unexpected crashes",
+    )
+    crawl.add_argument(
+        "--no-auto-restart",
+        dest="auto_restart",
+        action="store_false",
+        help="Disable automatic restart after unexpected crashes",
+    )
+    crawl.add_argument(
+        "--restart-delay",
+        type=float,
+        default=SETTINGS.runner.restart_delay_s,
+        help="Seconds to wait before restarting after a crash",
+    )
+    crawl.add_argument(
+        "--max-restarts",
+        type=int,
+        default=SETTINGS.runner.max_restarts,
+        help="Maximum auto-restart attempts, 0 means unlimited",
+    )
+    crawl.add_argument(
         "--skip-retry",
         action="store_true",
         help="Skip the second-pass retry pipeline",
@@ -275,6 +341,9 @@ def build_parser() -> argparse.ArgumentParser:
 def main() -> None:
     parser = build_parser()
     args = parser.parse_args()
+    if args.command == "crawl":
+        run_crawl_with_auto_restart(args)
+        return
     asyncio.run(args.func(args))
 
 

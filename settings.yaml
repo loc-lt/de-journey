@@ -17,6 +17,11 @@ retry:
   recheck_rounds: 3
   round_delay_s: 1.5
 
+runner:
+  auto_restart: true
+  restart_delay_s: 10.0
+  max_restarts: 0
+
 reports:
   input_validation: input_validation_report.json
   output_validation: output_validation_report.json

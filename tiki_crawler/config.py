@@ -39,6 +39,13 @@ class RetrySettings:
 
 
 @dataclass(frozen=True)
+class RunnerSettings:
+    auto_restart: bool
+    restart_delay_s: float
+    max_restarts: int
+
+
+@dataclass(frozen=True)
 class ReportSettings:
     input_validation: str
     output_validation: str
@@ -53,6 +60,7 @@ class AppSettings:
     output: OutputSettings
     crawl: CrawlSettings
     retry: RetrySettings
+    runner: RunnerSettings
     reports: ReportSettings
 
 
@@ -77,6 +85,7 @@ def load_settings(path: Path = SETTINGS_FILE) -> AppSettings:
     output_payload = payload.get("output", {})
     crawl_payload = payload.get("crawl", {})
     retry_payload = payload.get("retry", {})
+    runner_payload = payload.get("runner", {})
     reports_payload = payload.get("reports", {})
 
     return AppSettings(
@@ -94,6 +103,11 @@ def load_settings(path: Path = SETTINGS_FILE) -> AppSettings:
             retries=int(retry_payload["retries"]),
             recheck_rounds=int(retry_payload["recheck_rounds"]),
             round_delay_s=float(retry_payload["round_delay_s"]),
+        ),
+        runner=RunnerSettings(
+            auto_restart=bool(runner_payload["auto_restart"]),
+            restart_delay_s=float(runner_payload["restart_delay_s"]),
+            max_restarts=int(runner_payload["max_restarts"]),
         ),
         reports=ReportSettings(
             input_validation=str(reports_payload["input_validation"]),
