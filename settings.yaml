@@ -12,9 +12,10 @@ crawl:
 
 retry:
   enabled: true
-  concurrency: 2
   timeout_s: 20.0
   retries: 3
+  recheck_rounds: 3
+  round_delay_s: 1.5
 
 reports:
   input_validation: input_validation_report.json

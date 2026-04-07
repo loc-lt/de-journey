@@ -32,9 +32,10 @@ class CrawlSettings:
 @dataclass(frozen=True)
 class RetrySettings:
     enabled: bool
-    concurrency: int
     timeout_s: float
     retries: int
+    recheck_rounds: int
+    round_delay_s: float
 
 
 @dataclass(frozen=True)
@@ -89,9 +90,10 @@ def load_settings(path: Path = SETTINGS_FILE) -> AppSettings:
         ),
         retry=RetrySettings(
             enabled=bool(retry_payload["enabled"]),
-            concurrency=int(retry_payload["concurrency"]),
             timeout_s=float(retry_payload["timeout_s"]),
             retries=int(retry_payload["retries"]),
+            recheck_rounds=int(retry_payload["recheck_rounds"]),
+            round_delay_s=float(retry_payload["round_delay_s"]),
         ),
         reports=ReportSettings(
             input_validation=str(reports_payload["input_validation"]),

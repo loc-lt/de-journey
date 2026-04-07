@@ -139,6 +139,8 @@ The crawler writes data to the `data/output/` directory:
 - `data/output/output_validation_report.json`
 - `data/output/checkpoint.json`
 - `data/output/retry/retry_summary.json`
+- `data/output/retry/confirmed_404.json`
+- `data/output/retry/still_unstable.json`
 
 Each product output file contains normalized records with these fields:
 
@@ -155,6 +157,12 @@ Each failed record contains:
 - `status_code`
 - `error`
 - `elapsed_s`
+
+The retry pipeline now rechecks failed IDs in multiple slow sequential rounds and splits
+the unresolved set into:
+
+- `confirmed_404`: IDs that consistently returned `404` in every recheck round
+- `still_unstable`: IDs that kept failing, but not always in the same way
 
 ## Description Normalization
 
@@ -191,7 +199,7 @@ The crawler follows a data-first pipeline:
 2. Crawl product details in batches
 3. Write successful and failed records to disk immediately
 4. Save a checkpoint after each completed batch
-5. Run a slower retry pipeline for failed IDs
+5. Run a slower sequential retry pipeline for failed IDs
 6. Validate the generated output
 7. Write final reports and summary files
 

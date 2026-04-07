@@ -29,8 +29,10 @@ def print_retry_report(summary: RetrySummary) -> None:
     print(f"  Failed IDs from main crawl: {summary.total_failed_ids}")
     print(f"  Retried IDs: {summary.retried_ids}")
     print(f"  Recovered IDs: {summary.recovered_count}")
-    print(f"  Still failed: {summary.still_failed_count}")
-    print(f"  Retry concurrency: {summary.concurrency}")
+    print(f"  Confirmed 404 IDs: {summary.confirmed_404_count}")
+    print(f"  Still unstable IDs: {summary.unstable_count}")
+    print(f"  Still failed total: {summary.still_failed_count}")
+    print(f"  Recheck rounds: {summary.rounds_run}")
     print(f"  Retry elapsed: {summary.elapsed_s:.2f}s ({format_duration(summary.elapsed_s)})")
     if summary.error_breakdown:
         print("  Retry error breakdown:")

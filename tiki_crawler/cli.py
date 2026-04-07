@@ -203,10 +203,9 @@ async def run_crawl(args: argparse.Namespace) -> None:
     # Stage 3: retry failed IDs slowly and carefully to reduce false negatives.
     retry_enabled = SETTINGS.retry.enabled and not args.skip_retry
     if retry_enabled:
-        retry_summary = await run_retry_pipeline(
+        retry_summary = run_retry_pipeline(
             output_dir=output_dir,
             batch_size=args.batch_size,
-            concurrency=args.retry_concurrency,
         )
         summary["retry_summary"] = retry_summary.to_dict()
         summary["success_count"] += retry_summary.recovered_count
@@ -262,12 +261,6 @@ def build_parser() -> argparse.ArgumentParser:
     crawl.add_argument("--concurrency", type=int, default=SETTINGS.crawl.concurrency, help="Concurrent requests per batch")
     crawl.add_argument("--timeout", type=float, default=SETTINGS.crawl.timeout_s, help="Request timeout in seconds")
     crawl.add_argument("--retries", type=int, default=SETTINGS.crawl.retries, help="Retry count for transient failures")
-    crawl.add_argument(
-        "--retry-concurrency",
-        type=int,
-        default=SETTINGS.retry.concurrency,
-        help="Concurrency for the slower retry pipeline",
-    )
     crawl.add_argument(
         "--skip-retry",
         action="store_true",

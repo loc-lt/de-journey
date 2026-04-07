@@ -51,7 +51,9 @@ class RetrySummary:
     recovered_count: int
     still_failed_count: int
     elapsed_s: float
-    concurrency: int
+    confirmed_404_count: int = 0
+    unstable_count: int = 0
+    rounds_run: int = 0
     error_breakdown: dict[str, int] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
