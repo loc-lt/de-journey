@@ -27,11 +27,12 @@ The default generator creates:
 | Table | Rows |
 | --- | ---: |
 | brand | 20 |
-| category | 10 |
-| seller | 25 |
-| product | 2,000 |
-| promotion | 10 |
-| promotion_product | 100 |
+| category | 25 |
+| seller | 50 |
+| customer | 30,000 |
+| product | 3,000 |
+| promotion | 30 |
+| promotion_product | 500 |
 
 `orders` and `order_item` are included in `src/schema.sql`, but this project does not generate their very large datasets yet because the assignment notes that they belong to the next SQL project.
 
@@ -99,9 +100,10 @@ After loading, the script prints:
 
 - row count for each generated table
 - invalid product foreign keys
-- invalid discount prices
 - invalid category hierarchy
+- duplicate customer contacts
 - invalid promotion date ranges
+- invalid promotion discount values
 - duplicate promotion-product mappings
 
 All invalid checks should return `0`.

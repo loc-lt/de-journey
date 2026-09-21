@@ -6,13 +6,21 @@ from sqlalchemy.engine import Engine
 from src.db import TABLE_LOAD_ORDER, sync_serial_sequences
 
 
+CSV_DTYPES = {
+    "customer": {
+        "email": "string",
+        "phone": "string",
+    },
+}
+
+
 def load_csv_files(engine: Engine, output_dir: Path) -> None:
     for table_name in TABLE_LOAD_ORDER:
         csv_path = output_dir / f"{table_name}.csv"
         if not csv_path.exists():
             raise FileNotFoundError(f"Missing CSV file: {csv_path}")
 
-        dataframe = pd.read_csv(csv_path)
+        dataframe = pd.read_csv(csv_path, dtype=CSV_DTYPES.get(table_name))
         dataframe = dataframe.where(pd.notna(dataframe), None)
         dataframe.to_sql(
             table_name,

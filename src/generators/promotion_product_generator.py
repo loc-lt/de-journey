@@ -1,4 +1,5 @@
 import random
+from datetime import datetime
 
 import pandas as pd
 
@@ -8,7 +9,7 @@ from src.utils.faker_utils import build_faker
 def generate_promotion_products(
     promotions: pd.DataFrame,
     products: pd.DataFrame,
-    row_count: int = 100,
+    row_count: int = 500,
 ) -> pd.DataFrame:
     fake = build_faker()
     promotion_ids = promotions["promotion_id"].to_list()
@@ -27,7 +28,10 @@ def generate_promotion_products(
             "promo_product_id": promo_product_id,
             "promotion_id": promotion_id,
             "product_id": product_id,
-            "created_at": fake.date_time_this_year(),
+            "created_at": fake.date_time_between(
+                start_date=datetime(2025, 1, 1),
+                end_date=datetime(2025, 5, 31, 23, 59, 59),
+            ),
         }
         for promo_product_id, (promotion_id, product_id) in enumerate(sorted(pairs), start=1)
     ]

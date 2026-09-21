@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import numpy as np
 import pandas as pd
 
@@ -9,12 +11,27 @@ CATEGORY_PRICE_RANGES = {
     "Fashion": (100_000, 3_000_000),
     "Home & Living": (150_000, 8_000_000),
     "Beauty": (50_000, 2_000_000),
+    "Sports": (100_000, 10_000_000),
     "Mobile Phones": (3_000_000, 50_000_000),
     "Laptops": (7_000_000, 60_000_000),
+    "Cameras": (2_000_000, 45_000_000),
+    "Audio": (200_000, 15_000_000),
+    "Gaming": (500_000, 40_000_000),
     "Men Clothing": (120_000, 4_000_000),
     "Women Clothing": (120_000, 4_000_000),
+    "Shoes": (200_000, 6_000_000),
+    "Bags": (150_000, 8_000_000),
     "Kitchen": (100_000, 10_000_000),
+    "Furniture": (500_000, 30_000_000),
+    "Decor": (80_000, 5_000_000),
+    "Bedding": (150_000, 6_000_000),
     "Skincare": (80_000, 2_500_000),
+    "Makeup": (80_000, 3_000_000),
+    "Hair Care": (70_000, 2_000_000),
+    "Fragrance": (200_000, 8_000_000),
+    "Fitness Equipment": (300_000, 20_000_000),
+    "Outdoor Gear": (200_000, 15_000_000),
+    "Team Sports": (100_000, 8_000_000),
 }
 
 def _money(value: float) -> float:
@@ -25,7 +42,7 @@ def generate_products(
     brands: pd.DataFrame,
     categories: pd.DataFrame,
     sellers: pd.DataFrame,
-    row_count: int = 2_000,
+    row_count: int = 3_000,
 ) -> pd.DataFrame:
     fake = build_faker()
     rows = []
@@ -39,7 +56,6 @@ def generate_products(
         category_name = category["category_name"]
         min_price, max_price = CATEGORY_PRICE_RANGES[category_name]
         price = _money(np.random.uniform(min_price, max_price))
-        discount_price = _money(price * np.random.uniform(0.7, 1.0))
 
         rows.append(
             {
@@ -49,10 +65,12 @@ def generate_products(
                 "brand_id": fake.random_element(elements=brand_ids),
                 "seller_id": fake.random_element(elements=seller_ids),
                 "price": price,
-                "discount_price": discount_price,
                 "stock_qty": fake.random_int(min=0, max=500),
                 "rating": round(np.random.uniform(3.0, 5.0), 1),
-                "created_at": fake.date_time_between(start_date="-3y", end_date="now"),
+                "created_at": fake.date_time_between(
+                    start_date=datetime(2024, 6, 1),
+                    end_date=datetime(2024, 12, 31, 23, 59, 59),
+                ),
                 "is_active": bool(np.random.choice([True, False], p=[0.9, 0.1])),
             }
         )

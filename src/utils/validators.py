@@ -8,6 +8,7 @@ VALIDATION_QUERIES = {
         SELECT 'brand' AS table_name, COUNT(*) AS row_count FROM brand
         UNION ALL SELECT 'category', COUNT(*) FROM category
         UNION ALL SELECT 'seller', COUNT(*) FROM seller
+        UNION ALL SELECT 'customer', COUNT(*) FROM customer
         UNION ALL SELECT 'product', COUNT(*) FROM product
         UNION ALL SELECT 'promotion', COUNT(*) FROM promotion
         UNION ALL SELECT 'promotion_product', COUNT(*) FROM promotion_product
@@ -23,21 +24,32 @@ VALIDATION_QUERIES = {
            OR c.category_id IS NULL
            OR s.seller_id IS NULL
     """,
-    "invalid_discount_prices": """
-        SELECT COUNT(*) AS invalid_rows
-        FROM product
-        WHERE discount_price > price
-    """,
     "invalid_category_hierarchy": """
         SELECT COUNT(*) AS invalid_rows
         FROM category
         WHERE (level = 1 AND parent_category_id IS NOT NULL)
            OR (level = 2 AND parent_category_id IS NULL)
     """,
+    "duplicate_customer_contacts": """
+        SELECT
+            (SELECT COUNT(*) FROM (
+                SELECT email FROM customer GROUP BY email HAVING COUNT(*) > 1
+            ) duplicate_emails) AS duplicate_emails,
+            (SELECT COUNT(*) FROM (
+                SELECT phone FROM customer GROUP BY phone HAVING COUNT(*) > 1
+            ) duplicate_phones) AS duplicate_phones
+    """,
     "invalid_promotion_dates": """
         SELECT COUNT(*) AS invalid_rows
         FROM promotion
         WHERE end_date < start_date
+           OR start_date < created_at::date
+    """,
+    "invalid_promotion_discount_values": """
+        SELECT COUNT(*) AS invalid_rows
+        FROM promotion
+        WHERE discount_value <= 0
+           OR (discount_type = 'percentage' AND discount_value > 100)
     """,
     "duplicate_promotion_products": """
         SELECT COUNT(*) AS duplicate_pairs

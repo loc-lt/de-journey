@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import date, datetime, timedelta
 
 import numpy as np
 import pandas as pd
@@ -23,7 +23,7 @@ PROMOTION_TYPES = ["product", "category", "seller", "flash_sale"]
 DISCOUNT_TYPES = ["percentage", "fixed_amount"]
 
 
-def generate_promotions(row_count: int = 10) -> pd.DataFrame:
+def generate_promotions(row_count: int = 30) -> pd.DataFrame:
     fake = build_faker()
     rows = []
 
@@ -36,18 +36,26 @@ def generate_promotions(row_count: int = 10) -> pd.DataFrame:
                 elements=[10_000, 20_000, 50_000, 100_000, 200_000, 500_000]
             )
 
-        start_date = fake.date_between(start_date="-1y", end_date="+6m")
+        created_at = fake.date_time_between(
+            start_date=datetime(2024, 12, 1),
+            end_date=datetime(2025, 1, 31, 23, 59, 59),
+        )
+        start_date = fake.date_between(
+            start_date=max(created_at.date(), date(2025, 1, 1)),
+            end_date=date(2025, 4, 30),
+        )
         end_date = start_date + timedelta(days=fake.random_int(min=30, max=50))
 
         rows.append(
             {
                 "promotion_id": promotion_id,
-                "promotion_name": PROMOTION_NAMES[(promotion_id - 1) % len(PROMOTION_NAMES)],
+                "promotion_name": f"{PROMOTION_NAMES[(promotion_id - 1) % len(PROMOTION_NAMES)]} {promotion_id}",
                 "promotion_type": fake.random_element(elements=PROMOTION_TYPES),
                 "discount_type": discount_type,
                 "discount_value": discount_value,
                 "start_date": start_date,
                 "end_date": end_date,
+                "created_at": created_at,
             }
         )
 

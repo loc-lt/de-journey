@@ -5,6 +5,7 @@ import pandas as pd
 from src.config import OUTPUT_DIR, ROW_COUNTS, SCHEMA_PATH
 from src.generators.brand_generator import generate_brands
 from src.generators.category_generator import generate_categories
+from src.generators.customer_generator import generate_customers
 from src.generators.product_generator import generate_products
 from src.generators.promotion_generator import generate_promotions
 from src.generators.promotion_product_generator import generate_promotion_products
@@ -28,6 +29,7 @@ def generate_all_csv_files() -> None:
     brands = generate_brands(ROW_COUNTS["brand"])
     categories = generate_categories(ROW_COUNTS["category"])
     sellers = generate_sellers(ROW_COUNTS["seller"])
+    customers = generate_customers(ROW_COUNTS["customer"])
     products = generate_products(brands, categories, sellers, ROW_COUNTS["product"])
     promotions = generate_promotions(ROW_COUNTS["promotion"])
     promotion_products = generate_promotion_products(
@@ -39,6 +41,7 @@ def generate_all_csv_files() -> None:
     export_dataframe(brands, "brand")
     export_dataframe(categories, "category")
     export_dataframe(sellers, "seller")
+    export_dataframe(customers, "customer")
     export_dataframe(products, "product")
     export_dataframe(promotions, "promotion")
     export_dataframe(promotion_products, "promotion_product")

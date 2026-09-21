@@ -27,11 +27,12 @@ DATABASE_URL = (
 
 ROW_COUNTS = {
     "brand": 20,
-    "category": 10,
-    "seller": 25,
-    "product": 2_000,
-    "promotion": 10,
-    "promotion_product": 100,
+    "category": 25,
+    "seller": 50,
+    "customer": 30_000,
+    "product": 3_000,
+    "promotion": 30,
+    "promotion_product": 500,
 }
 
 RANDOM_SEED = int(os.getenv("RANDOM_SEED", "42"))
